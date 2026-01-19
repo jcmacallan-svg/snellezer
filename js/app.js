@@ -219,3 +219,40 @@ dom.fileInput?.addEventListener("change", async () => {
   const buf = await f.arrayBuffer();
   await loadPDFArrayBuffer(buf, f.name);
 });
+
+// ---------- bundled pdf button ----------
+async function fetchFirstOk(paths) {
+  let lastErr = null;
+  for (const p of paths) {
+    try {
+      const res = await fetch(p, { cache: "no-store" });
+      if (res.ok) return res;
+      lastErr = new Error(`${p} -> ${res.status} ${res.statusText}`);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("No PDF path worked");
+}
+
+dom.openmcnamara?.addEventListener("click", async () => {
+  try {
+    // Use lowercase first (GitHub Pages is case-sensitive)
+    const res = await fetchFirstOk([
+      "./pdf/mcnamara.pdf",
+      "./pdf/McNamara.pdf",     // fallback if you ever change case
+      "./PDF/mcnamara.pdf",
+      "./PDF/McNamara.pdf",
+    ]);
+
+    const buf = await res.arrayBuffer();
+    await loadPDFArrayBuffer(buf, "mcnamara.pdf");
+  } catch (err) {
+    console.error(err);
+    alert(
+      "Could not open bundled PDF.\n\n" +
+      "Check that the file exists in your repo at: pdf/mcnamara.pdf (lowercase)\n" +
+      "and that GitHub Pages has finished deploying."
+    );
+  }
+});
