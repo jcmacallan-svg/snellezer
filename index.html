@@ -710,20 +710,6 @@ doctype html>
     const reason = e.reason && (e.reason.stack || e.reason.message) ? (e.reason.stack || e.reason.message) : String(e.reason || e);
     showErr("Unhandled promise rejection:\n" + reason);
   });
-  // Watchdog: if module never boots, show a hint
-  setTimeout(()=>{
-    if (!window.__APP_BOOTED){
-      if (banner){
-        const proto = location.protocol;
-        banner.style.display = "block";
-        if (proto === "file:"){
-          bannerText.innerHTML = "You opened this via <b>file://</b>. Start a local server instead: <code>python3 -m http.server 8000</code> then open <code>http://localhost:8000</code>.";
-        } else {
-          bannerText.innerHTML = "The JS module did not start. This can happen if the PDF.js CDN is blocked. Try another network or allow jsdelivr, then reload.";
-        }
-      }
-    }
-  }, 900);
 })();
 </script>
 
@@ -1078,8 +1064,8 @@ showControlsBtn.addEventListener("click", ()=>{
 
         // Cancel any in-flight render (pdf.js forbids concurrent render() on same canvas)
         if (currentRenderTask){
-          try{ currentRenderTask.cancel(); } catch {}
-          try{ await currentRenderTask.promise; } catch {} // wait for cancel to settle
+          try{ currentRenderTask.cancel(); } catch(e) {}
+          try{ await currentRenderTask.promise; } catch(e) {} // wait for cancel to settle
           currentRenderTask = null;
         }
 
@@ -1281,7 +1267,7 @@ showControlsBtn.addEventListener("click", ()=>{
         }
       };
       localStorage.setItem(LS_UI, JSON.stringify(ui));
-    } catch {}
+    } catch(e) {}
   }
 
   function loadUI(){
@@ -1320,7 +1306,7 @@ showControlsBtn.addEventListener("click", ()=>{
 
       zoomEl.value = String(Math.round(zoom*100));
       zoomVal.textContent = `${zoom.toFixed(2)}×`;
-    } catch {}
+    } catch(e) {}
   }
 
   // Save/restore reading state
@@ -1333,7 +1319,7 @@ showControlsBtn.addEventListener("click", ()=>{
         wpm: clamp(Number(wpmNumber.value||600),100,900),
         last: { page: currentStreamPage, wordOffsetInPage: Math.max(0, idx) }
       }));
-    } catch {}
+    } catch(e) {}
   }
   function loadState(){
     try{ return JSON.parse(localStorage.getItem(LS_STATE) || "null"); } catch { return null; }
@@ -1590,9 +1576,9 @@ If this is Netlify: confirm you can open the PDF directly in the browser via /pd
     lines.push(`UserAgent: ${navigator.userAgent}`);
     lines.push(`pdfjs version: ${pdfjsLib?.version || "(unknown)"}`);
     lines.push(`PDF loaded: ${pdf ? "yes" : "no"}`);
-    try{ lines.push(`Current page: ${pdf ? currentPage() : "-"}`);}catch{}
+    try{ lines.push(`Current page: ${pdf ? currentPage() : "-"}`);}catch(e) {}
     showDiag(lines.join("\n"));
-  } catch {}
+  } catch(e) {}
     lines.push("");
 
     // Test fetch to bundled PDF (common case issues: path/case/caching)
@@ -1785,7 +1771,7 @@ If this is Netlify: confirm you can open the PDF directly in the browser via /pd
       document.body.classList.add("preview-collapsed");
       openDrawer();
     }
-  } catch {}
+  } catch(e) {}
   // Initial UI load
   loadUI();
   setPreviewCollapsed(previewCollapsed);
