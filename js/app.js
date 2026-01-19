@@ -10,7 +10,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 const dom = {
   fileInput: $("fileInput"),
-  openMcNamara: $("openMcNamara"),
+  openmcnamara: $("openmcnamara"),
   startPage: $("startPage"),
   reload: $("reload"),
 
