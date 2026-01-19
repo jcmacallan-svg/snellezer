@@ -633,7 +633,7 @@
 
   <section id="main">
     <section id="readerPane">
-    <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert mcnamara.</div>
+    <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert McNamara.</div>
       <div id="rsvpBox">
         <div id="leftText"></div>
         <div id="pivot"></div>
@@ -1553,7 +1553,7 @@ toastMsg("PDF load failed.");
         if (!res.ok) res = await fetch("./PDF/mcnamara.pdf"); // case-sensitive deploys
         if (!res.ok) throw new Error("mcnamara.pdf not found");
         const buffer = await res.arrayBuffer();
-        await loadPDFArrayBuffer(buffer, "mcnamara.pdf", "Robert mcnamara");
+        await loadPDFArrayBuffer(buffer, "mcnamara.pdf", "Robert McNamara");
       } catch (e){
         console.error(e);
         alert("Could not open bundled PDF. Make sure you deploy it as pdf/mcnamara.pdf (lowercase folder name recommended).");
