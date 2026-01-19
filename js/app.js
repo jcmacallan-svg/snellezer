@@ -8,12 +8,9 @@ import { createPreview } from "./preview.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs";
 
-
 // ---------------- DOM ----------------
 const dom = {
   fileInput: $("fileInput"),
-  // optional button (we can remove it from HTML; we won't rely on it)
-  openmcnamara: $("openmcnamara"),
 
   startPage: $("startPage"),
   reload: $("reload"),
@@ -67,12 +64,12 @@ const showControlsBtn = document.getElementById("showControlsBtn");
 const LS_READING = "rsvp_reading_state_v1";
 
 function loadReadingStateCompat() {
-  // try whatever your old state.js provides first
+  // prefer state.js if it provides it
   try {
     const st = loadReadingStateFromStateJs?.();
     if (st) return st;
   } catch {}
-  // fallback to our own key
+  // fallback to our key
   try {
     return JSON.parse(localStorage.getItem(LS_READING) || "null");
   } catch {
@@ -95,14 +92,18 @@ function enableControls() {
     "startBtn",
     "pauseBtn",
     "resetBtn",
+
     "mode",
     "sentencePause",
     "commaPause",
     "paraPause",
+
     "wpmRange",
     "wpmNumber",
+
     "fontSize",
     "pivotGapPx",
+
     "togglePreview",
     "fitMode",
     "anchor",
@@ -170,7 +171,6 @@ const pageCache = new Map(); // page -> wordObjs
 
 const preview = createPreview({ dom, getPdf: () => pdf });
 
-// async per page
 async function getPageWords(p) {
   if (!pdf) return [];
   if (pageCache.has(p)) return pageCache.get(p);
@@ -186,8 +186,9 @@ async function getPageWords(p) {
     const s = (it.str || "").trim();
     if (s) {
       const parts = s.split(/\s+/).filter(Boolean);
-      for (const part of parts)
+      for (const part of parts) {
         wordObjs.push({ w: part, eolAfter: false, paraAfter: false, chapterAfter: false });
+      }
       eolStreak = 0;
     }
     if (it.hasEOL) {
@@ -202,9 +203,32 @@ async function getPageWords(p) {
 
   markChapterBreaks(wordObjs);
   pageCache.set(p, wordObjs);
+
   if (dom.extractStatus) dom.extractStatus.textContent = `Extract: cached ${pageCache.size}/${pdf.numPages}`;
   return wordObjs;
 }
+
+// ---------------- focus/fullscreen ----------------
+async function toggleFullscreenFocus() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+      document.body.classList.add("kiosk");
+      document.body.classList.add("sidebar-collapsed");
+    } else {
+      await document.exitFullscreen();
+      document.body.classList.remove("kiosk");
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) {
+    document.body.classList.remove("kiosk");
+  }
+});
 
 // ---------------- reader ----------------
 const reader = createReader({
@@ -230,7 +254,7 @@ dom.wpmNumber?.addEventListener("input", () => syncWPM("number"));
 
 dom.startBtn?.addEventListener("click", () => {
   reader.start();
-  // auto-hide sidebar
+  // auto-hide controls when reading starts
   document.body.classList.add("sidebar-collapsed");
 });
 
@@ -245,23 +269,28 @@ dom.reload?.addEventListener("click", async () => {
   await reader.loadPage(p, { resetWord: true });
 });
 
-// Tap-to-toggle on the reader pane
+// tap-to-toggle on the reader pane
 attachTapToToggle({ readerPane: dom.readerPane, reader });
 
-// Keyboard shortcuts:
+// Keyboard shortcuts (robust via e.code)
 // Space = pause/resume
 // P = toggle preview
 // H = toggle sidebar
+// F = fullscreen focus toggle
+// Esc = exit fullscreen
 document.addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
+  // don't hijack keys while typing
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+  const typing = tag === "input" || tag === "textarea" || tag === "select";
+  if (typing) return;
 
-  if (k === " ") {
+  if (e.code === "Space") {
     e.preventDefault();
     reader.pauseToggle();
     return;
   }
 
-  if (k === "p") {
+  if (e.code === "KeyP") {
     const btn = dom.togglePreview;
     if (btn && !btn.disabled) {
       e.preventDefault();
@@ -270,10 +299,23 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (k === "h") {
+  if (e.code === "KeyH") {
     e.preventDefault();
     document.body.classList.toggle("sidebar-collapsed");
     return;
+  }
+
+  if (e.code === "KeyF") {
+    e.preventDefault();
+    toggleFullscreenFocus();
+    return;
+  }
+
+  if (e.code === "Escape") {
+    if (document.fullscreenElement) {
+      e.preventDefault();
+      document.exitFullscreen().catch(() => {});
+    }
   }
 });
 
@@ -349,27 +391,23 @@ dom.fileInput?.addEventListener("change", async () => {
   const buf = await f.arrayBuffer();
   await loadPDFArrayBuffer(buf, f.name);
 
-  // show controls after upload (optional; feels nicer)
+  // show controls after upload
   document.body.classList.remove("sidebar-collapsed");
 });
 
 // ---------------- auto-load bundled pdf on startup ----------------
 async function autoLoadBundled() {
-  // If already loaded (e.g. user uploaded very fast), do nothing
   if (pdf) return;
 
   try {
-    // must match your repo EXACTLY
     const res = await fetch("./pdf/mcnamara.pdf", { cache: "no-store" });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
     const buf = await res.arrayBuffer();
     await loadPDFArrayBuffer(buf, "mcnamara.pdf");
   } catch (err) {
     console.error(err);
-    // don’t hard fail; user can upload
     if (dom.fileStatus) dom.fileStatus.textContent = "No default PDF";
   }
 }
 
-// kick off
 autoLoadBundled();
