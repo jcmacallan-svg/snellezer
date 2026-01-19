@@ -3,102 +3,594 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>RSVP Reader</title>
+<title>RSVP Reader – 3-Pane</title>
 
 <style>
-:root{
-  --bg:#0d1117; --panel:#161b22; --text:#e6edf3;
-  --muted:#9ba3af; --accent:#ff4d4d;
-  --border:#2b2b2b;
-  --fontPx:72px; --pivotGap:8px;
-}
+  :root{
+    --bg:#0d1117; --panel:#161b22; --text:#e6edf3; --muted:#9ba3af; --accent:#ff4d4d;
+    --field:#0b1220; --border:#2b2b2b;
 
-*{ box-sizing:border-box }
-body{
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:system-ui,-apple-system,sans-serif;
-  overflow:hidden;
-}
+    --sidebarW: 340px;
+    --readerW: 38%;
+    --dividerW: 10px;
 
-#app{ display:flex; height:100vh }
+    --fontPx: 72px;
+    --pivotGap: 8px;
+  }
 
-#sidebar{
-  width:320px; background:var(--panel);
-  border-right:1px solid var(--border);
-  padding:12px; overflow:auto;
-}
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    overflow:hidden;
+  }
 
-.group{
-  border:1px solid #222; border-radius:12px;
-  padding:10px; margin-bottom:12px;
-  background:#0f1524;
-}
+  #app{ height:100vh; display:flex; overflow:hidden; }
 
-button,input{
-  width:100%; margin-top:6px;
-  padding:8px; border-radius:8px;
-  border:1px solid var(--border);
-  background:#0b1220; color:var(--text);
-}
+  /* Sidebar */
+  #sidebar{
+    width: var(--sidebarW);
+    min-width: 260px;
+    max-width: 520px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
 
-#reader{
-  flex:1; display:flex;
-  align-items:center; justify-content:center;
-}
+  body.sidebar-min #sidebar{ width:56px !important; min-width:56px !important; }
+  body.sidebar-min #sideScroll{ display:none; }
+  body.sidebar-min #sideTitle{ display:block; writing-mode:vertical-rl; transform:rotate(180deg); font-size:12px; }
+  body.sidebar-min #sideTop{ justify-content:center; gap:6px; }
 
-#rsvp{
-  display:grid; grid-template-columns:1fr auto 1fr;
-  font-size:var(--fontPx); font-weight:650;
-}
+  body.sidebar-collapsed #sidebar{ width:0 !important; min-width:0 !important; border-right:none; }
 
-#left{ text-align:right; padding-right:var(--pivotGap) }
-#pivot{ color:var(--accent) }
-#right{ text-align:left; padding-left:var(--pivotGap) }
+  #sideTop{
+    height:44px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
 
-#status{
-  position:fixed; bottom:0; left:0; right:0;
-  height:32px; background:var(--panel);
-  display:flex; gap:12px; align-items:center;
-  padding:0 10px; font-size:12px;
-}
+  #burger{
+    width:32px; height:28px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    flex: 0 0 auto;
+  }
+  #burger:hover{ border-color: var(--accent); }
+
+  #sideTitle{
+    font-weight:700;
+    font-size:13px;
+    color:var(--text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  #sideScroll{ padding:12px; overflow:auto; }
+
+  .group{
+    border:1px solid #222;
+    border-radius:12px;
+    padding:10px;
+    margin:10px 0;
+    background:#0f1524;
+  }
+  .gtitle{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text);
+    margin:0 0 8px 0;
+  }
+  .hint{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.25;
+    margin-top:6px;
+  }
+
+  label{
+    font-size:11px;
+    color:var(--muted);
+    display:block;
+    margin:8px 0 6px;
+  }
+  input, select, button{ font:inherit; }
+  input, select{
+    width:100%;
+    background:var(--field);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:7px 10px;
+    font-size:12px;
+  }
+  input[type="range"]{ padding:0; height:28px; }
+  input[type="file"]{ padding:6px 8px; color:var(--muted); }
+
+  .row{ display:flex; gap:10px; align-items:center; }
+  .row > *{ flex:1; }
+  .row .shrink{ flex:0 0 auto; }
+
+  button{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:12px;
+    cursor:pointer;
+  }
+  button:hover{ border-color: var(--accent); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .tiny{
+    font-size:11px;
+    color:var(--muted);
+    text-align:right;
+    width:56px;
+    flex:0 0 auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Main region */
+  #main{
+    flex:1 1 auto;
+    min-width:0;
+    display:flex;
+    overflow:hidden;
+  }
+
+  /* Reader pane */
+  #readerPane{
+    flex: 0 0 var(--readerW);
+    min-width: 280px;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:12px;
+    overflow:hidden;
+  }
+
+  /* Splitter */
+  #splitter{
+    flex: 0 0 var(--dividerW);
+    cursor: col-resize;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,.08), transparent);
+    position:relative;
+    user-select:none;
+    touch-action:none;
+  }
+  #splitter::after{
+    content:"";
+    position:absolute; top:0; bottom:0;
+    left:50%; width:2px; transform:translateX(-50%);
+    background: rgba(255,255,255,.12);
+  }
+  #splitter:hover::after{ background: rgba(255,77,77,.65); }
+
+  /* Preview */
+  #previewPane{
+    flex: 1 1 auto;
+    min-width:0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    background:#0b0f17;
+  }
+  body.preview-collapsed #previewPane,
+  body.preview-collapsed #splitter{ display:none; }
+  body.preview-collapsed #readerPane{ flex: 1 1 auto; }
+
+  #previewTop{
+    height:40px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 10px;
+    color:var(--muted);
+    font-size:12px;
+    gap:10px;
+  }
+  #previewTitle{
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    max-width: 65%;
+  }
+
+  #previewBody{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    padding:12px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    overscroll-behavior: contain;
+    cursor: grab;
+  }
+  #previewBody.dragging{ cursor: grabbing; }
+
+  canvas{
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    display:block;
+  }
+
+  /* RSVP fixed pivot */
+  #rsvpBox{
+    width:min(980px, 96%);
+    height:140px;
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+  }
+  #leftText,#pivot,#rightText{
+    font-weight:650;
+    line-height:1;
+    white-space:nowrap;
+    font-variant-ligatures:none;
+    font-kerning:none;
+    font-feature-settings:"kern" 0;
+    text-rendering: geometricPrecision;
+    font-size: var(--fontPx);
+  }
+  #leftText{ text-align:right; padding-right: var(--pivotGap); }
+  #pivot{ color:var(--accent); width:1ch; text-align:center; padding:0 2px; }
+  #rightText{ text-align:left; padding-left: var(--pivotGap); }
+
+  /* Status bar */
+  #statusbar{
+    height:32px;
+    background: var(--panel);
+    border-top:1px solid var(--border);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    padding:0 10px;
+    color:var(--muted);
+    font-size:12px;
+    user-select:none;
+  }
+  .pill{
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid #222;
+    background:#0f1524;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Kiosk */
+  body.kiosk #sidebar{ width:0 !important; min-width:0 !important; border-right:none; }
+  body.kiosk #statusbar{ display:none; }
+
+  /* Toast */
+  #toast{
+    position:fixed;
+    left:50%;
+    bottom:14px;
+    transform:translateX(-50%);
+    background:rgba(15,21,36,.92);
+    border:1px solid #2b2b2b;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12px;
+    color:var(--muted);
+    display:none;
+    z-index: 100;
+  }
+  #toast.show{ display:block; }
+
+  /* ---------- Responsive (mobile) ---------- */
+  #backdrop{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.45);
+    z-index:180;
+    display:none;
+  }
+  body.sidebar-open #backdrop{ display:block; }
+
+  #mobileMenuBtn, #mobilePdfBtn{
+    position:fixed;
+    top:12px;
+    width:44px; height:44px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:rgba(22,27,34,.92);
+    color:var(--text);
+    z-index:230;
+    display:none;
+    box-shadow:0 10px 24px rgba(0,0,0,.28);
+    cursor:pointer;
+    font-size:18px;
+    line-height:1;
+    backdrop-filter: blur(6px);
+  }
+  #mobileMenuBtn{ left:12px; }
+  #mobilePdfBtn{ right:12px; }
+
+  #emptyHint{
+    position:absolute;
+    left:12px; right:12px;
+    top:14px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.35;
+    text-align:center;
+    user-select:none;
+    pointer-events:none;
+    opacity:.9;
+  }
+  body.has-pdf #emptyHint{ display:none; }
+
+  @media (max-width: 900px){
+    :root{ --sidebarW: min(86vw, 360px); }
+
+    #mobileMenuBtn, #mobilePdfBtn{ display:block; }
+
+    #sidebar{
+      position:fixed;
+      top:0; bottom:0; left:0;
+      z-index:200;
+      transform: translateX(-105%);
+      transition: transform .18s ease-out;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    }
+    body.sidebar-open #sidebar{ transform: translateX(0); }
+
+    #app{ display:block; height:100vh; }
+    #main{
+      height: calc(100vh - 32px);
+      display:flex;
+      flex-direction:column;
+    }
+    #readerPane{
+      flex: 0 0 auto;
+      width:100%;
+      min-width:0;
+      padding: 10px 12px;
+    }
+    #rsvpBox{ height: 120px; width: min(980px, 96vw); }
+
+    #splitter{ display:none; }
+
+    #previewPane{
+      flex: 1 1 auto;
+      width:100%;
+      border-top:1px solid var(--border);
+    }
+
+    button{ padding:10px 12px; }
+    input, select{ padding:10px 12px; font-size:14px; border-radius:12px; }
+    input[type="range"]{ height:34px; }
+
+    body.preview-collapsed #previewPane{ display:none; }
+  }
+
+  @media (max-width: 420px){
+    :root{ --fontPx: 58px; }
+  }
 </style>
 </head>
+
 <body>
+<div id="backdrop" aria-hidden="true"></div>
+
+<button id="mobileMenuBtn" title="Menu" aria-label="Open menu">☰</button>
+<button id="mobilePdfBtn" title="Toggle PDF" aria-label="Toggle PDF preview">📄</button>
+
 <div id="app">
-
-  <aside id="sidebar">
-    <div class="group">
-      <strong>Open PDF</strong>
-      <input id="fileInput" type="file" accept="application/pdf">
+  <aside id="sidebar" aria-label="Controls">
+    <div id="sideTop">
+      <button id="burger" title="Hide/show controls (H)">☰</button>
+      <div id="sideTitle">RSVP Reader</div>
     </div>
 
-    <div class="group">
-      <strong>Speed (WPM)</strong>
-      <input id="wpm" type="number" value="600" min="100" max="900">
-    </div>
+    <div id="sideScroll">
+      <div class="group">
+        <div class="gtitle">Open</div>
+        <button id="openMcNamara">📘 Robert McNamara</button>
+        <div class="hint">Opens bundled PDF: <code>pdf/McNamara.pdf</code></div>
 
-    <div class="group">
-      <button id="start">Start</button>
-      <button id="pause">Pause</button>
-      <button id="reset">Reset</button>
+        <label for="fileInput">PDF file</label>
+        <input id="fileInput" type="file" accept="application/pdf,.pdf">
+        <div class="hint">Reads your PDF locally in the browser (best with selectable text).</div>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Start point</div>
+        <div class="row">
+          <div>
+            <label for="startPage">Start page</label>
+            <input id="startPage" type="number" min="1" value="1">
+          </div>
+          <button class="shrink" id="reload" disabled title="Reload from page">Reload</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Speed</div>
+        <div class="row">
+          <div>
+            <label for="wpmNumber">Words per minute</label>
+            <input id="wpmNumber" type="number" min="100" max="900" value="600">
+          </div>
+        </div>
+        <div class="row">
+          <input id="wpmRange" type="range" min="100" max="900" value="600">
+          <div class="tiny" id="wpmRangeVal">600</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Comprehension</div>
+        <label for="mode">Mode</label>
+        <select id="mode" disabled>
+          <option value="speed">Speed</option>
+          <option value="comprehension">Comprehension</option>
+          <option value="custom">Custom</option>
+        </select>
+
+        <label for="sentencePause">Sentence pause (ms)</label>
+        <input id="sentencePause" type="number" min="0" max="2000" step="10" value="220" disabled>
+
+        <label for="commaPause">Comma pause (ms)</label>
+        <input id="commaPause" type="number" min="0" max="1000" step="10" value="120" disabled>
+
+        <label for="paraPause">Paragraph pause (ms)</label>
+        <input id="paraPause" type="number" min="0" max="4000" step="50" value="650" disabled>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Appearance</div>
+        <div class="row">
+          <div>
+            <label for="fontSize">Font size</label>
+            <input id="fontSize" type="range" min="36" max="96" value="72">
+          </div>
+          <div class="tiny" id="fontSizeVal">72</div>
+        </div>
+
+        <label for="pivotGapPx">Pivot spacing (px)</label>
+        <input id="pivotGapPx" type="number" min="4" max="20" step="1" value="8">
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Navigation</div>
+        <div class="row">
+          <button id="prevPage" disabled>◀ Prev</button>
+          <button id="nextPage" disabled>Next ▶</button>
+        </div>
+        <div class="row">
+          <button id="startBtn" disabled>Start</button>
+          <button id="pauseBtn" disabled>Pause</button>
+          <button id="resetBtn" disabled>Reset</button>
+        </div>
+        <div class="hint">Keys: Space pause/resume · H hide controls · P toggle preview · F fullscreen · R reset preview · PageUp/Down pages.</div>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Preview</div>
+        <div class="row">
+          <button id="togglePreview" disabled>Hide preview</button>
+          <label style="display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12px">
+            <input id="lockPos" type="checkbox" disabled> Lock
+          </label>
+        </div>
+
+        <label for="fitMode">Fit</label>
+        <select id="fitMode" disabled>
+          <option value="width">Fit width</option>
+          <option value="page">Fit page</option>
+        </select>
+
+        <label for="anchor">Anchor</label>
+        <select id="anchor" disabled>
+          <option value="center">Center</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+
+        <label for="zoom">Zoom</label>
+        <div class="row">
+          <input id="zoom" type="range" min="70" max="250" value="120" disabled>
+          <div class="tiny" id="zoomVal">1.20×</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="gtitle">Focus</div>
+        <label for="focus">Focus mode</label>
+        <select id="focus" disabled>
+          <option value="on">On</option>
+          <option value="off">Off</option>
+        </select>
+
+        <div class="row">
+          <button id="fsBtn" class="shrink">Fullscreen</button>
+          <button id="showControlsBtn" class="shrink" title="Show controls temporarily">Show</button>
+        </div>
+      </div>
     </div>
   </aside>
 
-  <main id="reader">
-    <div id="rsvp">
-      <div id="left"></div>
-      <div id="pivot"></div>
-      <div id="right"></div>
-    </div>
-  </main>
+  <section id="main">
+    <section id="readerPane">
+      <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert McNamara.</div>
+      <div id="rsvpBox">
+        <div id="leftText"></div>
+        <div id="pivot"></div>
+        <div id="rightText"></div>
+      </div>
+    </section>
 
+    <div id="splitter" title="Drag to resize preview"></div>
+
+    <aside id="previewPane">
+      <div id="previewTop">
+        <div id="previewTitle">PDF</div>
+        <div id="previewPage">–</div>
+      </div>
+      <div id="previewBody" title="Double-click / double-tap to reset view">
+        <canvas id="canvas"></canvas>
+      </div>
+    </aside>
+  </section>
 </div>
 
-<div id="status">
-  <span id="fileStatus">No PDF</span>
-  <span id="pageStatus">–</span>
-  <span id="wordStatus">–</span>
+<div id="statusbar">
+  <span class="pill" id="fileStatus">No PDF</span>
+  <span class="pill" id="pageStatus">Page: –</span>
+  <span class="pill" id="wordStatus">Word: –</span>
+  <span class="pill" id="extractStatus">Extract: –</span>
 </div>
-<script type="module" src="js/app.js"></script>
+
+<div id="toast">Tip</div>
+<script>
+  // Lightweight drawer handling for mobile buttons
+  (function(){
+    const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const mobilePdfBtn  = document.getElementById("mobilePdfBtn");
+    const backdrop      = document.getElementById("backdrop");
+
+    function openDrawer(){ document.body.classList.add("sidebar-open"); }
+    function closeDrawer(){ document.body.classList.remove("sidebar-open"); }
+
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", openDrawer);
+    if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+    // Toggle preview on mobile quick button
+    if (mobilePdfBtn) mobilePdfBtn.addEventListener("click", ()=>{
+      const btn = document.getElementById("togglePreview");
+      if (btn && !btn.disabled) btn.click();
+    });
+
+    // If user taps outside sidebar on mobile, close drawer
+    window.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape" && isMobile()) closeDrawer();
+    });
+  })();
+</script>
+
+<!-- IMPORTANT: app.js expects this exact DOM -->
+<script type="module" src="./js/app.js"></script>
 </body>
 </html>
