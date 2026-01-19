@@ -462,21 +462,19 @@
     :root{ --fontPx: 58px; }
   }
 
-
-  /* Auto focus in landscape on small screens */
-  body.landscape-focus .previewPane{ display:none !important; }
-  body.landscape-focus .divider{ display:none !important; }
-  body.landscape-focus .wordPane{ flex:1 1 auto !important; }
-  body.landscape-focus .sidebar{ transform: translateX(-100%) !important; }
-  body.landscape-focus .sidebarToggle{ opacity:1 !important; }
-
 </style>
 </head>
 
 <body class="sidebar-left">
 <div id="backdrop" aria-hidden="true"></div>
-  <div id="bootBannerText">JavaScript module did not start. This usually happens when opening via <b>file://</b>, or when <code>pdf.mjs</code>/<code>pdf.worker.mjs</code> are missing from your deploy.</div>
+<div id="bootBanner" style="position:fixed; left:12px; right:12px; bottom:12px; z-index:9998; background:rgba(22,27,34,.95); border:1px solid #2b2b2b; border-radius:12px; padding:10px 12px; font-size:12px; color:#9ba3af; display:none;">
+  <div style="font-weight:700; color:#e6edf3; margin-bottom:4px;">App not started</div>
+  <div id="bootBannerText" id="rsvpBootMsg" style="display:none;">JavaScript module did not start. This usually happens when opening via <b>file://</b> or when the CDN is blocked.</div>
 </div>
+<div id="errorOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6);">
+  <div style="position:relative; margin:8vh auto; width:min(920px,92vw); max-height:84vh; overflow:auto; background:#0f1524; border:1px solid #2b2b2b; border-radius:16px; padding:14px 14px 10px; box-shadow:0 20px 60px rgba(0,0,0,.55);">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div style="font-weight:700;">Runtime error</div>
       <button id="errClose" style="padding:8px 10px;">Close</button>
     </div>
     <div id="errBody" style="margin-top:10px; font-size:12px; color:#9ba3af; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace;"></div>
@@ -497,8 +495,8 @@
 
       <div class="group">
         <div class="gtitle">Open</div>
-        <button id="openmcnamara" class="primary">📘 Robert McNamara</button>
-        <button id="diagBtn">ℹ️ Diagnostics</button>
+        <button id="openMcNamara" class="primary">📘 Robert McNamara</button>
+  <button id="diagBtn">ℹ️ Diagnostics</button>
 <div class="hint">Opens the bundled PDF: <code>pdf/mcnamara.pdf</code></div>
         <label for="fileInput">PDF file</label>
         <input id="fileInput" type="file" accept="application/pdf,.pdf">
@@ -676,16 +674,6 @@
 </div>
 
 <script>
-  let moduleStarted = false;
-
-function hideModuleError() {
-  const el = document.getElementById("moduleError");
-  if (el) el.style.display = "none";
-}
-
-function showModuleError() {
-  const el = document.getElementById("moduleError");
-  if (el) el.style.display = "block";
 (function(){
   const banner = document.getElementById("bootBanner");
   const bannerText = document.getElementById("bootBannerText");
@@ -723,8 +711,25 @@ function showModuleError() {
 })();
 </script>
 
+
+<script>
+  window.__RSVP_MODULE_STARTED = false;
+  window.__RSVP_BOOT_TIMER = setTimeout(() => {
+    if (!window.__RSVP_MODULE_STARTED) {
+      const el = document.getElementById("rsvpBootMsg");
+      if (el) el.style.display = "block";
+      const c = document.getElementById("bootClose");
+      if (c) c.onclick = () => el && (el.style.display="none");
+    }
+  }, 1200);
+</script>
+
 <script type="module">
-  window.__APP_BOOTED = true;
+    window.__RSVP_MODULE_STARTED = true;
+  if (window.__RSVP_BOOT_TIMER) clearTimeout(window.__RSVP_BOOT_TIMER);
+  const __boot = document.getElementById("rsvpBootMsg"); if (__boot) __boot.style.display = "none";
+
+window.__APP_BOOTED = true;
   import * as pdfjsLib from "./pdf.mjs";
   pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.worker.mjs";
 
@@ -832,14 +837,7 @@ function showModuleError() {
   const diagBackdrop = document.getElementById('diagBackdrop');
   const diagClose = document.getElementById('diagClose');
   const diagBody = document.getElementById('diagBody');
-  function showDiag(text){
-    if (!diagModal) return;
-    diagBody.textContent = text;
-    diagModal.style.display = 'block';
-  }
-  function hideDiag(){ if (diagModal) diagModal.style.display='none'; }
-  if (diagBackdrop) diagBackdrop.addEventListener('click', hideDiag);
-  if (diagClose) diagClose.addEventListener('click', hideDiag);
+  function if (diagClose) diagClose.addEventListener('click', hideDiag);
 
   function toastMsg(msg){
     toast.textContent = msg;
@@ -1545,7 +1543,7 @@ saveState();
       fileStatus.textContent = "Load failed";
       extractStatus.textContent = "Extract: error";
       renderRSVP({w:"Error"});
-toastMsg("PDF load failed.");
+toastMsg("PDF load failed (tap for details)");
       }
   }
 
@@ -1555,21 +1553,73 @@ toastMsg("PDF load failed.");
     const buffer = await file.arrayBuffer();
     await loadPDFArrayBuffer(buffer, file.name, file.name);
   });
-  const openmcnamaraBtn = document.getElementById("openmcnamara");
-  if (openmcnamaraBtn){
-    openmcnamaraBtn.addEventListener("click", async () => {
+  const openMcNamaraBtn = document.getElementById("openMcNamara");
+  if (openMcNamaraBtn){
+    openMcNamaraBtn.addEventListener("click", async () => {
       try{
         let res = await fetch("./pdf/mcnamara.pdf");
-        if (!res.ok) res = await fetch("./PDF/mcnamara.pdf"); // case-sensitive deploys
-        if (!res.ok) throw new Error("mcnamara.pdf not found");
+        if (!res.ok) res = await fetch("./pdf/mcnamara.pdf"); // case-sensitive deploys
+        if (!res.ok) throw new Error("McNamara.pdf not found");
         const buffer = await res.arrayBuffer();
-        await loadPDFArrayBuffer(buffer, "mcnamara.pdf", "Robert McNamara");
+        await loadPDFArrayBuffer(buffer, "McNamara.pdf", "Robert McNamara");
       } catch (e){
         console.error(e);
         alert("Could not open bundled PDF. Make sure you deploy it as pdf/mcnamara.pdf (lowercase folder name recommended).");
       }
     });
   }
+  const healthBtn = document.getElementById("healthBtn");
+  async function healthCheck(){
+    const lines = [];
+    lines.push("RSVP Reader Health Check");
+    lines.push("========================");
+    lines.push(`URL: ${window.location.href}`);
+    lines.push(`Protocol: ${window.location.protocol}`);
+    lines.push(`UserAgent: ${navigator.userAgent}`);
+    lines.push("");
+    lines.push("1) PDF.js module loaded:");
+    lines.push(`   pdfjsLib: ${typeof pdfjsLib !== "undefined" ? "OK" : "MISSING"}`);
+    try{
+      lines.push(`   pdfjsLib.version: ${pdfjsLib?.version || "(unknown)"}`);
+    } catch {}
+    lines.push("");
+
+    // Test fetch to bundled PDF (common case issues: path/case/caching)
+    const candidates = [
+      "pdf/mcnamara.pdf",
+      "pdf/mcnamara.pdf",
+      "pdf/magnamera.pdf",
+      "pdf/Magnamera.pdf",
+      "pdf/mcnamara.pdf",
+      "pdf/mcnamara.pdf",
+      "pdf/mcnamara.pdf",
+      "pdf/mcnamara.pdf",
+    ];
+    lines.push("2) Bundled PDF fetch test (first 8 variants):");
+    for (const rel of candidates){
+      const url = new URL(rel, window.location.href).toString();
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        lines.push(`   ${res.status} ${res.statusText}  ${rel}`);
+      } catch (e){
+        lines.push(`   FETCH_ERROR  ${rel}  (${e?.message || e})`);
+      }
+    }
+    lines.push("");
+
+    lines.push("3) Local file usage note:");
+    if (window.location.protocol === "file:"){
+      lines.push("   You are running as file:// — ES modules + PDF.js will often fail.");
+      lines.push("   Fix: run a local server (recommended):");
+      lines.push("     python3 -m http.server 8000");
+      lines.push("   Then open: http://localhost:8000/");
+    } else {
+      lines.push("   OK (http/https).");
+    }
+    lines.push("");
+
+    }
+  if (healthBtn) healthBtn.addEventListener("click", healthCheck);
 
 
 // Controls
@@ -1711,29 +1761,6 @@ toastMsg("PDF load failed.");
       saveState();
     }
   });
-
-  // Tap-to-toggle Start/Pause (mobile friendly)
-  (function(){
-    const pane = document.getElementById("readerPane") || document.body;
-    let lastTapTime = 0;
-    pane.addEventListener("click", (e) => {
-      // Ignore taps on controls/links/buttons/inputs
-      const t = e.target;
-      if (t && (t.closest("button, a, input, select, textarea, label"))) return;
-      if (!pdf) return;
-      const now = Date.now();
-      // Prevent double-tap selecting text etc.
-      if (now - lastTapTime < 180) return;
-      lastTapTime = now;
-
-      if (paused) {
-        startBtn.click();   // start continues
-      } else {
-        pauseBtn.click();
-      }
-    });
-  })();
-
   // init labels & preview label
   zoomVal.textContent = `${(Number(zoomEl.value)/100).toFixed(2)}×`;
   togglePreviewBtn.textContent = "Hide preview";
@@ -1751,17 +1778,6 @@ toastMsg("PDF load failed.");
   loadUI();
   setPreviewCollapsed(previewCollapsed);
   updateSideToggleIcon();
-
-  // Auto focus mode in landscape on mobile-sized screens (hides preview + sidebar)
-  function applyLandscapeFocus(){
-    const isSmall = Math.min(window.innerWidth, window.innerHeight) <= 520;
-    const isLandscape = window.matchMedia && window.matchMedia("(orientation: landscape)").matches;
-    document.body.classList.toggle("landscape-focus", isSmall && isLandscape);
-  }
-  window.addEventListener("resize", applyLandscapeFocus, { passive:true });
-  window.addEventListener("orientationchange", applyLandscapeFocus, { passive:true });
-  applyLandscapeFocus();
 </script>
 </body>
 </html>
-<!-- trigger pages -->
