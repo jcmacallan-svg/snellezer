@@ -697,7 +697,7 @@
   // Watchdog: if module never boots, show a hint
   setTimeout(()=>{
     if (!window.__APP_BOOTED){
-      if (banner){
+      if (banner && bannerText){
         const proto = location.protocol;
         banner.style.display = "block";
         if (proto === "file:"){
