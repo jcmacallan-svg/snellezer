@@ -235,24 +235,30 @@ async function fetchFirstOk(paths) {
   throw lastErr || new Error("No PDF path worked");
 }
 
-dom.openmcnamara?.addEventListener("click", async () => {
+// ---------- auto-load bundled PDF on startup ----------
+async function autoLoadBundledPdfIfNoUserFile() {
+  // Als er al een reading-state is, willen we alsnog dezelfde file auto-loaden
+  // zodat restore kan werken (we matchen op fileName + numPages).
+  // Dus: we loaden altijd de bundled PDF bij start, tenzij je dat niet wilt.
   try {
-    // Use lowercase first (GitHub Pages is case-sensitive)
-    const res = await fetchFirstOk([
-      "./pdf/mcnamara.pdf",
-      "./pdf/McNamara.pdf",     // fallback if you ever change case
-      "./PDF/mcnamara.pdf",
-      "./PDF/McNamara.pdf",
-    ]);
+    // Alleen autoloaden als er nog geen PDF in geheugen zit
+    if (pdf) return;
+
+    const res = await fetch("./pdf/mcnamara.pdf", { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
 
     const buf = await res.arrayBuffer();
     await loadPDFArrayBuffer(buf, "mcnamara.pdf");
   } catch (err) {
     console.error(err);
+    // Niet hard failen: user kan nog steeds uploaden
     alert(
-      "Could not open bundled PDF.\n\n" +
-      "Check that the file exists in your repo at: pdf/mcnamara.pdf (lowercase)\n" +
-      "and that GitHub Pages has finished deploying."
+      "Auto-load failed.\n\n" +
+      "Check that the file exists in your repo at: pdf/mcnamara.pdf (lowercase).\n" +
+      "You can still upload a PDF with the file picker."
     );
   }
-});
+}
+
+// Start zodra de module geladen is
+autoLoadBundledPdfIfNoUserFile();
