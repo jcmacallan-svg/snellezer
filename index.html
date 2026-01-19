@@ -569,33 +569,6 @@
 </div>
 
 <div id="toast">Tip</div>
-<script>
-  // Lightweight drawer handling for mobile buttons
-  (function(){
-    const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
-    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
-    const mobilePdfBtn  = document.getElementById("mobilePdfBtn");
-    const backdrop      = document.getElementById("backdrop");
-
-    function openDrawer(){ document.body.classList.add("sidebar-open"); }
-    function closeDrawer(){ document.body.classList.remove("sidebar-open"); }
-
-    if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", openDrawer);
-    if (backdrop) backdrop.addEventListener("click", closeDrawer);
-
-    // Toggle preview on mobile quick button
-    if (mobilePdfBtn) mobilePdfBtn.addEventListener("click", ()=>{
-      const btn = document.getElementById("togglePreview");
-      if (btn && !btn.disabled) btn.click();
-    });
-
-    // If user taps outside sidebar on mobile, close drawer
-    window.addEventListener("keydown", (e)=>{
-      if (e.key === "Escape" && isMobile()) closeDrawer();
-    });
-  })();
-</script>
-
 <!-- IMPORTANT: app.js expects this exact DOM -->
 <script type="module" src="./js/app.js"></script>
 </body>
