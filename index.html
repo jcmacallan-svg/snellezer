@@ -1,20 +1,4 @@
-<!
-  // Tap-to-toggle Start/Pause (mobile friendly): tap word area (not controls) to start/pause.
-  (function(){
-    const pane = document.getElementById("readerPane") || document.body;
-    let lastTap = 0;
-    pane.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t && t.closest("button, a, input, select, textarea, label")) return;
-      if (!pdf) return;
-      const now = Date.now();
-      if (now - lastTap < 180) return;
-      lastTap = now;
-      if (paused) startBtn.click();
-      else pauseBtn.click();
-    });
-  })();
-doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -1776,6 +1760,22 @@ If this is Netlify: confirm you can open the PDF directly in the browser via /pd
   loadUI();
   setPreviewCollapsed(previewCollapsed);
   updateSideToggleIcon();
+
+
+  // Tap-to-toggle Start/Pause (mobile friendly): tap word area (not controls) to start/pause.
+  (function(){
+    const pane = document.getElementById("readerPane") || document.body;
+    let lastTap = 0;
+    pane.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && t.closest("button, a, input, select, textarea, label")) return;
+      if (!pdf) return;
+      const now = Date.now();
+      if (now - lastTap < 180) return;
+      lastTap = now;
+      if (paused) startBtn.click(); else pauseBtn.click();
+    }, { passive: true });
+  })();
 </script>
 </body>
 </html>
