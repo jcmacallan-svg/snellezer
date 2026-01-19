@@ -8,6 +8,7 @@ import { createPreview } from "./preview.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs";
 
+
 // ---------------- DOM ----------------
 const dom = {
   fileInput: $("fileInput"),
