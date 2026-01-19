@@ -694,20 +694,6 @@
     const reason = e.reason && (e.reason.stack || e.reason.message) ? (e.reason.stack || e.reason.message) : String(e.reason || e);
     showErr("Unhandled promise rejection:\n" + reason);
   });
-  // Watchdog: if module never boots, show a hint
-  setTimeout(()=>{
-    if (!window.__APP_BOOTED){
-      if (banner && bannerText){
-        const proto = location.protocol;
-        banner.style.display = "block";
-        if (proto === "file:"){
-          bannerText.innerHTML = "You opened this via <b>file://</b>. Start a local server instead: <code>python3 -m http.server 8000</code> then open <code>http://localhost:8000</code>.";
-        } else {
-          bannerText.innerHTML = "The JS module did not start. This can happen if the PDF.js CDN is blocked. Try another network or allow jsdelivr, then reload.";
-        }
-      }
-    }
-  }, 900);
 })();
 </script>
 
