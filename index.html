@@ -676,6 +676,16 @@
 </div>
 
 <script>
+  let moduleStarted = false;
+
+function hideModuleError() {
+  const el = document.getElementById("moduleError");
+  if (el) el.style.display = "none";
+}
+
+function showModuleError() {
+  const el = document.getElementById("moduleError");
+  if (el) el.style.display = "block";
 (function(){
   const banner = document.getElementById("bootBanner");
   const bannerText = document.getElementById("bootBannerText");
