@@ -1,4 +1,20 @@
-<!doctype html>
+<!
+  // Tap-to-toggle Start/Pause (mobile friendly): tap word area (not controls) to start/pause.
+  (function(){
+    const pane = document.getElementById("readerPane") || document.body;
+    let lastTap = 0;
+    pane.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && t.closest("button, a, input, select, textarea, label")) return;
+      if (!pdf) return;
+      const now = Date.now();
+      if (now - lastTap < 180) return;
+      lastTap = now;
+      if (paused) startBtn.click();
+      else pauseBtn.click();
+    });
+  })();
+doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -496,8 +512,8 @@
       <div class="group">
         <div class="gtitle">Open</div>
         <button id="openMcNamara" class="primary">📘 Robert McNamara</button>
-  <button id="diagBtn">ℹ️ Diagnostics</button>
-<div class="hint">Opens the bundled PDF: <code>pdf/mcnamara.pdf</code></div>
+        <button id="diagBtn">🩺 Health check</button>
+        <div class="hint">Opens the bundled PDF: <code>pdf/mcnamara.pdf</code></div>
         <label for="fileInput">PDF file</label>
         <input id="fileInput" type="file" accept="application/pdf,.pdf">
         <div class="hint">Reads your PDF locally in the browser. For best results, use PDFs with selectable text (not scans).</div>
@@ -694,9 +710,22 @@
     const reason = e.reason && (e.reason.stack || e.reason.message) ? (e.reason.stack || e.reason.message) : String(e.reason || e);
     showErr("Unhandled promise rejection:\n" + reason);
   });
+  // Watchdog: if module never boots, show a hint
+  setTimeout(()=>{
+    if (!window.__APP_BOOTED){
+      if (banner){
+        const proto = location.protocol;
+        banner.style.display = "block";
+        if (proto === "file:"){
+          bannerText.innerHTML = "You opened this via <b>file://</b>. Start a local server instead: <code>python3 -m http.server 8000</code> then open <code>http://localhost:8000</code>.";
+        } else {
+          bannerText.innerHTML = "The JS module did not start. This can happen if the PDF.js CDN is blocked. Try another network or allow jsdelivr, then reload.";
+        }
+      }
+    }
+  }, 900);
 })();
 </script>
-
 
 <script type="module">
   window.__APP_BOOTED = true;
@@ -807,7 +836,14 @@
   const diagBackdrop = document.getElementById('diagBackdrop');
   const diagClose = document.getElementById('diagClose');
   const diagBody = document.getElementById('diagBody');
-  function if (diagClose) diagClose.addEventListener('click', hideDiag);
+  function showDiag(text){
+    if (!diagModal) return;
+    diagBody.textContent = text;
+    diagModal.style.display = 'block';
+  }
+  function hideDiag(){ if (diagModal) diagModal.style.display='none'; }
+  if (diagBackdrop) diagBackdrop.addEventListener('click', hideDiag);
+  if (diagClose) diagClose.addEventListener('click', hideDiag);
 
   function toastMsg(msg){
     toast.textContent = msg;
@@ -1514,6 +1550,12 @@ saveState();
       extractStatus.textContent = "Extract: error";
       renderRSVP({w:"Error"});
 toastMsg("PDF load failed (tap for details)");
+      showDiag(`PDF load/extract failed.
+
+Name: ${(name || "(unknown)")}
+Error: ${(err?.message || err)}
+
+If this is Netlify: confirm you can open the PDF directly in the browser via /pdf/<filename>.`);
       }
   }
 
@@ -1538,20 +1580,19 @@ toastMsg("PDF load failed (tap for details)");
       }
     });
   }
-  const healthBtn = document.getElementById("healthBtn");
+  const diagBtn = document.getElementById("healthBtn");
   async function healthCheck(){
     const lines = [];
-    lines.push("RSVP Reader Health Check");
-    lines.push("========================");
+    lines.push("RSVP Reader Diagnostics");
+    lines.push("======================");
     lines.push(`URL: ${window.location.href}`);
     lines.push(`Protocol: ${window.location.protocol}`);
     lines.push(`UserAgent: ${navigator.userAgent}`);
-    lines.push("");
-    lines.push("1) PDF.js module loaded:");
-    lines.push(`   pdfjsLib: ${typeof pdfjsLib !== "undefined" ? "OK" : "MISSING"}`);
-    try{
-      lines.push(`   pdfjsLib.version: ${pdfjsLib?.version || "(unknown)"}`);
-    } catch {}
+    lines.push(`pdfjs version: ${pdfjsLib?.version || "(unknown)"}`);
+    lines.push(`PDF loaded: ${pdf ? "yes" : "no"}`);
+    try{ lines.push(`Current page: ${pdf ? currentPage() : "-"}`);}catch{}
+    showDiag(lines.join("\n"));
+  } catch {}
     lines.push("");
 
     // Test fetch to bundled PDF (common case issues: path/case/caching)
@@ -1560,9 +1601,9 @@ toastMsg("PDF load failed (tap for details)");
       "pdf/mcnamara.pdf",
       "pdf/magnamera.pdf",
       "pdf/Magnamera.pdf",
+      "pdf/mcnamara.PDF",
       "pdf/mcnamara.pdf",
-      "pdf/mcnamara.pdf",
-      "pdf/mcnamara.pdf",
+      "PDF/mcnamara.pdf",
       "pdf/mcnamara.pdf",
     ];
     lines.push("2) Bundled PDF fetch test (first 8 variants):");
@@ -1588,8 +1629,9 @@ toastMsg("PDF load failed (tap for details)");
     }
     lines.push("");
 
-    }
-  if (healthBtn) healthBtn.addEventListener("click", healthCheck);
+    showDiag(lines.join("\n"));
+  }
+  if (diagBtn) diagBtn.addEventListener("click", healthCheck);
 
 
 // Controls
