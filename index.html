@@ -387,6 +387,21 @@
   @media (max-width: 420px){
     :root{ --fontPx: 58px; }
   }
+  /* Mobile drawer: ensure sidebar content is scrollable */
+@media (max-width: 900px){
+  #sidebar { overflow: hidden !important; }
+  #sideScroll { 
+    overflow-y: auto !important; 
+    -webkit-overflow-scrolling: touch;
+    height: calc(100vh - 44px); /* 44px = sideTop */
+  }
+
+  /* Make sure backdrop doesn't block scrolling when menu is open */
+  body.sidebar-open { overflow: hidden; }
+  body.sidebar-open #backdrop { display: block; pointer-events: auto; }
+  #backdrop { pointer-events: none; }
+}
+
 </style>
 </head>
 
