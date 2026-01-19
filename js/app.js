@@ -1,6 +1,6 @@
 import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs";
 import { $, clamp } from "./util.js";
-import { loadUI, saveUI, loadReadingState } from "./state.js";
+import { loadUI, saveUI, loadReadingState as loadReadingStateFromStateJs } from "./state.js";
 import { createReader } from "./reader.js";
 import { attachTapToToggle } from "./gestures.js";
 import { createPreview } from "./preview.js";
@@ -8,9 +8,12 @@ import { createPreview } from "./preview.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs";
 
+// ---------------- DOM ----------------
 const dom = {
   fileInput: $("fileInput"),
+  // optional button (we can remove it from HTML; we won't rely on it)
   openmcnamara: $("openmcnamara"),
+
   startPage: $("startPage"),
   reload: $("reload"),
 
@@ -42,6 +45,7 @@ const dom = {
   pageStatus: $("pageStatus"),
   wordStatus: $("wordStatus"),
   extractStatus: $("extractStatus"),
+
   // preview DOM
   previewBody: $("previewBody"),
   canvas: $("canvas"),
@@ -54,15 +58,62 @@ const dom = {
   lockPos: $("lockPos"),
 };
 
-// ---------- minimal enable ----------
-function enableControls() {
-  ["reload","prevPage","nextPage","startBtn","pauseBtn","resetBtn",
-   "mode","sentencePause","commaPause","paraPause",
-   "wpmRange","wpmNumber","fontSize","pivotGapPx"
-  ].forEach(id => { const el = $(id); if (el) el.disabled = false; });
+// optional UI buttons (exist in your full index)
+const burger = document.getElementById("burger");
+const showControlsBtn = document.getElementById("showControlsBtn");
+
+// ---------------- persistence (compat) ----------------
+const LS_READING = "rsvp_reading_state_v1";
+
+function loadReadingStateCompat() {
+  // try whatever your old state.js provides first
+  try {
+    const st = loadReadingStateFromStateJs?.();
+    if (st) return st;
+  } catch {}
+  // fallback to our own key
+  try {
+    return JSON.parse(localStorage.getItem(LS_READING) || "null");
+  } catch {
+    return null;
+  }
 }
 
-// ---------- UI apply ----------
+function saveReadingStateCompat(state) {
+  try {
+    localStorage.setItem(LS_READING, JSON.stringify(state));
+  } catch {}
+}
+
+// ---------------- enable controls ----------------
+function enableControls() {
+  [
+    "reload",
+    "prevPage",
+    "nextPage",
+    "startBtn",
+    "pauseBtn",
+    "resetBtn",
+    "mode",
+    "sentencePause",
+    "commaPause",
+    "paraPause",
+    "wpmRange",
+    "wpmNumber",
+    "fontSize",
+    "pivotGapPx",
+    "togglePreview",
+    "fitMode",
+    "anchor",
+    "zoom",
+    "lockPos",
+  ].forEach((id) => {
+    const el = $(id);
+    if (el) el.disabled = false;
+  });
+}
+
+// ---------------- UI apply ----------------
 function applyFont() {
   const px = clamp(Number(dom.fontSize?.value || 72), 36, 96);
   document.documentElement.style.setProperty("--fontPx", px + "px");
@@ -84,19 +135,30 @@ function syncWPM(from) {
   saveUI(dom);
 }
 
-// ---------- extraction (lazy + cached) ----------
+// ---------------- extraction (lazy + cached) ----------------
 function markChapterBreaks(wordObjs) {
   const isAllCaps = (s) => /^[A-Z0-9ÄÖÜÉÈÊÁÀÂÍÌÎÓÒÔÚÙÛÇÑ]+$/.test(s) && /[A-Z]/.test(s);
   let lineStart = 0;
-  for (let i=0;i<wordObjs.length;i++){
-    if (wordObjs[i].eolAfter){
-      const line = wordObjs.slice(lineStart, i+1).map(x=>x.w||"");
+  for (let i = 0; i < wordObjs.length; i++) {
+    if (wordObjs[i].eolAfter) {
+      const line = wordObjs.slice(lineStart, i + 1).map((x) => x.w || "");
       const clean = line.join(" ").trim();
       const wcount = line.filter(Boolean).length;
       const hasChapter = /\b(chapter|hoofdstuk|kapitel)\b/i.test(clean);
-      const looksHeading = wcount <= 8 && (hasChapter || isAllCaps(clean.replace(/[^A-Z0-9ÄÖÜÉÈÊÁÀÂÍÌÎÓÒÔÚÙÛÇÑ ]/g,"").replace(/\s+/g," ").trim()));
-      if (looksHeading) { wordObjs[i].paraAfter = true; wordObjs[i].chapterAfter = true; }
-      lineStart = i+1;
+      const looksHeading =
+        wcount <= 8 &&
+        (hasChapter ||
+          isAllCaps(
+            clean
+              .replace(/[^A-Z0-9ÄÖÜÉÈÊÁÀÂÍÌÎÓÒÔÚÙÛÇÑ ]/g, "")
+              .replace(/\s+/g, " ")
+              .trim()
+          ));
+      if (looksHeading) {
+        wordObjs[i].paraAfter = true;
+        wordObjs[i].chapterAfter = true;
+      }
+      lineStart = i + 1;
     }
   }
 }
@@ -104,8 +166,10 @@ function markChapterBreaks(wordObjs) {
 let pdf = null;
 let pdfFileName = "";
 const pageCache = new Map(); // page -> wordObjs
+
 const preview = createPreview({ dom, getPdf: () => pdf });
 
+// async per page
 async function getPageWords(p) {
   if (!pdf) return [];
   if (pageCache.has(p)) return pageCache.get(p);
@@ -121,7 +185,8 @@ async function getPageWords(p) {
     const s = (it.str || "").trim();
     if (s) {
       const parts = s.split(/\s+/).filter(Boolean);
-      for (const part of parts) wordObjs.push({ w: part, eolAfter:false, paraAfter:false, chapterAfter:false });
+      for (const part of parts)
+        wordObjs.push({ w: part, eolAfter: false, paraAfter: false, chapterAfter: false });
       eolStreak = 0;
     }
     if (it.hasEOL) {
@@ -140,24 +205,34 @@ async function getPageWords(p) {
   return wordObjs;
 }
 
-// ---------- reader ----------
+// ---------------- reader ----------------
 const reader = createReader({
   dom,
   pdfRef: () => pdf,
   pdfNameRef: () => pdfFileName,
   extractorRef: () => getPageWords,
-  previewRef: () => preview, // preview module komt in stap 2 (dan zetten we dit aan)
+  previewRef: () => preview,
   rsvpEls: { leftEl: dom.leftText, pivotEl: dom.pivot, rightEl: dom.rightText },
+  persist: {
+    load: loadReadingStateCompat,
+    save: saveReadingStateCompat,
+    key: LS_READING,
+  },
 });
 
-// ---------- events ----------
+// ---------------- events ----------------
 dom.fontSize?.addEventListener("input", applyFont);
 dom.pivotGapPx?.addEventListener("input", applyFont);
 
 dom.wpmRange?.addEventListener("input", () => syncWPM("range"));
 dom.wpmNumber?.addEventListener("input", () => syncWPM("number"));
 
-dom.startBtn?.addEventListener("click", () => reader.start());
+dom.startBtn?.addEventListener("click", () => {
+  reader.start();
+  // auto-hide sidebar
+  document.body.classList.add("sidebar-collapsed");
+});
+
 dom.pauseBtn?.addEventListener("click", () => reader.pauseToggle());
 dom.resetBtn?.addEventListener("click", () => reader.reset());
 dom.prevPage?.addEventListener("click", () => reader.prev());
@@ -169,45 +244,99 @@ dom.reload?.addEventListener("click", async () => {
   await reader.loadPage(p, { resetWord: true });
 });
 
+// Tap-to-toggle on the reader pane
 attachTapToToggle({ readerPane: dom.readerPane, reader });
 
-// Keyboard: Space pause/resume
+// Keyboard shortcuts:
+// Space = pause/resume
+// P = toggle preview
+// H = toggle sidebar
 document.addEventListener("keydown", (e) => {
-  if (e.key === " ") { e.preventDefault(); reader.pauseToggle(); }
+  const k = e.key.toLowerCase();
+
+  if (k === " ") {
+    e.preventDefault();
+    reader.pauseToggle();
+    return;
+  }
+
+  if (k === "p") {
+    const btn = dom.togglePreview;
+    if (btn && !btn.disabled) {
+      e.preventDefault();
+      btn.click();
+    }
+    return;
+  }
+
+  if (k === "h") {
+    e.preventDefault();
+    document.body.classList.toggle("sidebar-collapsed");
+    return;
+  }
 });
 
-// ---------- load pdf ----------
+// burger toggles sidebar
+if (burger) {
+  burger.addEventListener("click", () => {
+    document.body.classList.toggle("sidebar-collapsed");
+  });
+}
+
+// show controls temporarily (if button exists)
+if (showControlsBtn) {
+  showControlsBtn.addEventListener("click", () => {
+    document.body.classList.remove("sidebar-collapsed");
+    window.clearTimeout(window.__hideT);
+    window.__hideT = window.setTimeout(() => {
+      document.body.classList.add("sidebar-collapsed");
+    }, 4000);
+  });
+}
+
+// ---------------- load pdf ----------------
 async function loadPDFArrayBuffer(buffer, name) {
   pdfFileName = name;
-  dom.fileStatus.textContent = name;
+  if (dom.fileStatus) dom.fileStatus.textContent = name;
   pageCache.clear();
-
 
   pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   enableControls();
   loadUI(dom);
-preview.setZoomFromUI();
-preview.setCurrentPage(1);
-if (!document.body.classList.contains("preview-collapsed")) {
-  preview.queueRender(1);
-}
+
+  // preview init
+  preview.setZoomFromUI?.();
+  preview.setCurrentPage?.(1);
+  if (!document.body.classList.contains("preview-collapsed")) {
+    preview.queueRender?.(1);
+  }
+
   applyFont();
   syncWPM("number");
-
   document.body.classList.add("has-pdf");
 
-  dom.pageStatus.textContent = `Page: 1/${pdf.numPages}`;
-  dom.wordStatus.textContent = `Word: –`;
+  if (dom.pageStatus) dom.pageStatus.textContent = `Page: 1/${pdf.numPages}`;
+  if (dom.wordStatus) dom.wordStatus.textContent = `Word: –`;
 
   // restore if matching
-  const st = loadReadingState();
+  const st = loadReadingStateCompat();
   if (st && st.fileName === pdfFileName && st.numPages === pdf.numPages) {
-    if (typeof st.wpm === "number" && dom.wpmNumber) { dom.wpmNumber.value = String(clamp(st.wpm,100,900)); syncWPM("number"); }
+    if (typeof st.wpm === "number" && dom.wpmNumber) {
+      dom.wpmNumber.value = String(clamp(st.wpm, 100, 900));
+      syncWPM("number");
+    }
     const p = clamp(Number(st.last?.page || 1), 1, pdf.numPages);
     const off = Math.max(0, Number(st.last?.wordOffsetInPage || 0));
+
     await reader.loadPage(p, { resetWord: true });
     reader.setIdx(off);
+
+    // keep preview in sync with restored page
+    preview.setCurrentPage?.(p);
+    if (!document.body.classList.contains("preview-collapsed")) {
+      preview.queueRender?.(p);
+    }
   } else {
     await reader.loadPage(clamp(Number(dom.startPage?.value || 1), 1, pdf.numPages), { resetWord: true });
   }
@@ -218,47 +347,28 @@ dom.fileInput?.addEventListener("change", async () => {
   if (!f) return;
   const buf = await f.arrayBuffer();
   await loadPDFArrayBuffer(buf, f.name);
+
+  // show controls after upload (optional; feels nicer)
+  document.body.classList.remove("sidebar-collapsed");
 });
 
-// ---------- bundled pdf button ----------
-async function fetchFirstOk(paths) {
-  let lastErr = null;
-  for (const p of paths) {
-    try {
-      const res = await fetch(p, { cache: "no-store" });
-      if (res.ok) return res;
-      lastErr = new Error(`${p} -> ${res.status} ${res.statusText}`);
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr || new Error("No PDF path worked");
-}
+// ---------------- auto-load bundled pdf on startup ----------------
+async function autoLoadBundled() {
+  // If already loaded (e.g. user uploaded very fast), do nothing
+  if (pdf) return;
 
-// ---------- auto-load bundled PDF on startup ----------
-async function autoLoadBundledPdfIfNoUserFile() {
-  // Als er al een reading-state is, willen we alsnog dezelfde file auto-loaden
-  // zodat restore kan werken (we matchen op fileName + numPages).
-  // Dus: we loaden altijd de bundled PDF bij start, tenzij je dat niet wilt.
   try {
-    // Alleen autoloaden als er nog geen PDF in geheugen zit
-    if (pdf) return;
-
+    // must match your repo EXACTLY
     const res = await fetch("./pdf/mcnamara.pdf", { cache: "no-store" });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
-
     const buf = await res.arrayBuffer();
     await loadPDFArrayBuffer(buf, "mcnamara.pdf");
   } catch (err) {
     console.error(err);
-    // Niet hard failen: user kan nog steeds uploaden
-    alert(
-      "Auto-load failed.\n\n" +
-      "Check that the file exists in your repo at: pdf/mcnamara.pdf (lowercase).\n" +
-      "You can still upload a PDF with the file picker."
-    );
+    // don’t hard fail; user can upload
+    if (dom.fileStatus) dom.fileStatus.textContent = "No default PDF";
   }
 }
 
-// Start zodra de module geladen is
-autoLoadBundledPdfIfNoUserFile();
+// kick off
+autoLoadBundled();
