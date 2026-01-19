@@ -56,20 +56,23 @@ const dom = {
   lockPos: $("lockPos"),
 };
 
-// optional UI buttons (exist in your full index)
-const burger = document.getElementById("burger");
-const showControlsBtn = document.getElementById("showControlsBtn");
+// Optional UI buttons from your 3-pane index
+const burger = document.getElementById("burger");       // ☰ in sidebar top
+const sideToggle = document.getElementById("sideToggle"); // ⟨/⟩ floating chevron
+const sideTitle = document.getElementById("sideTitle"); // "RSVP Reader" title
+const fsBtn = document.getElementById("fsBtn");         // Fullscreen button (if present)
+const showControlsBtn = document.getElementById("showControlsBtn"); // if present
 
 // ---------------- persistence (compat) ----------------
 const LS_READING = "rsvp_reading_state_v1";
 
 function loadReadingStateCompat() {
-  // prefer state.js if it provides it
+  // Prefer your state.js helper if present
   try {
     const st = loadReadingStateFromStateJs?.();
     if (st) return st;
   } catch {}
-  // fallback to our key
+  // Fallback local key
   try {
     return JSON.parse(localStorage.getItem(LS_READING) || "null");
   } catch {
@@ -81,6 +84,30 @@ function saveReadingStateCompat(state) {
   try {
     localStorage.setItem(LS_READING, JSON.stringify(state));
   } catch {}
+}
+
+// ---------------- helpers ----------------
+function isTypingTarget(t) {
+  const tag = (t && t.tagName) ? t.tagName.toLowerCase() : "";
+  return tag === "input" || tag === "textarea" || tag === "select";
+}
+
+function setSidebarMin(on) {
+  document.body.classList.toggle("sidebar-min", !!on);
+  if (on) document.body.classList.remove("sidebar-collapsed"); // min implies visible
+  saveUI(dom);
+}
+
+function toggleSidebarMin() {
+  const on = document.body.classList.contains("sidebar-min");
+  setSidebarMin(!on);
+}
+
+function toggleSidebarCollapsed() {
+  const on = document.body.classList.contains("sidebar-collapsed");
+  document.body.classList.toggle("sidebar-collapsed", !on);
+  if (!on) document.body.classList.remove("sidebar-min"); // collapsed overrides min
+  saveUI(dom);
 }
 
 // ---------------- enable controls ----------------
@@ -208,7 +235,7 @@ async function getPageWords(p) {
   return wordObjs;
 }
 
-// ---------------- focus/fullscreen ----------------
+// ---------------- fullscreen focus ----------------
 async function toggleFullscreenFocus() {
   try {
     if (!document.fullscreenElement) {
@@ -254,8 +281,8 @@ dom.wpmNumber?.addEventListener("input", () => syncWPM("number"));
 
 dom.startBtn?.addEventListener("click", () => {
   reader.start();
-  // auto-hide controls when reading starts
-  document.body.classList.add("sidebar-collapsed");
+  // Auto-hide: after start, go minimal (NOT collapsed)
+  setSidebarMin(true);
 });
 
 dom.pauseBtn?.addEventListener("click", () => reader.pauseToggle());
@@ -269,27 +296,55 @@ dom.reload?.addEventListener("click", async () => {
   await reader.loadPage(p, { resetWord: true });
 });
 
-// tap-to-toggle on the reader pane
 attachTapToToggle({ readerPane: dom.readerPane, reader });
 
-// Keyboard shortcuts (robust via e.code)
-// Space = pause/resume
-// P = toggle preview
-// H = toggle sidebar
-// F = fullscreen focus toggle
-// Esc = exit fullscreen
-document.addEventListener("keydown", (e) => {
-  // don't hijack keys while typing
-  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-  const typing = tag === "input" || tag === "textarea" || tag === "select";
-  if (typing) return;
+// Preview button
+dom.togglePreview?.addEventListener("click", () => {
+  document.body.classList.toggle("preview-collapsed");
+  saveUI(dom);
+});
 
+// Sidebar UI buttons
+if (burger) {
+  burger.addEventListener("click", () => {
+    // Burger collapses fully (useful for maximum space)
+    toggleSidebarCollapsed();
+  });
+}
+if (sideToggle) {
+  sideToggle.addEventListener("click", () => {
+    // Chevron toggles minimal mode (your choice #2)
+    toggleSidebarMin();
+  });
+}
+if (sideTitle) {
+  // handy: click title also toggles minimal
+  sideTitle.addEventListener("click", () => toggleSidebarMin());
+}
+if (fsBtn) {
+  fsBtn.addEventListener("click", () => toggleFullscreenFocus());
+}
+if (showControlsBtn) {
+  showControlsBtn.addEventListener("click", () => {
+    // show full controls (remove min+collapsed)
+    document.body.classList.remove("sidebar-min");
+    document.body.classList.remove("sidebar-collapsed");
+    saveUI(dom);
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (isTypingTarget(e.target)) return;
+
+  // Space: pause/resume
   if (e.code === "Space") {
     e.preventDefault();
     reader.pauseToggle();
     return;
   }
 
+  // P: toggle preview
   if (e.code === "KeyP") {
     const btn = dom.togglePreview;
     if (btn && !btn.disabled) {
@@ -299,18 +354,21 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // H: toggle sidebar MINIMAL (your choice #2)
   if (e.code === "KeyH") {
     e.preventDefault();
-    document.body.classList.toggle("sidebar-collapsed");
+    toggleSidebarMin();
     return;
   }
 
+  // F: fullscreen focus toggle
   if (e.code === "KeyF") {
     e.preventDefault();
     toggleFullscreenFocus();
     return;
   }
 
+  // Esc: exit fullscreen
   if (e.code === "Escape") {
     if (document.fullscreenElement) {
       e.preventDefault();
@@ -318,24 +376,6 @@ document.addEventListener("keydown", (e) => {
     }
   }
 });
-
-// burger toggles sidebar
-if (burger) {
-  burger.addEventListener("click", () => {
-    document.body.classList.toggle("sidebar-collapsed");
-  });
-}
-
-// show controls temporarily (if button exists)
-if (showControlsBtn) {
-  showControlsBtn.addEventListener("click", () => {
-    document.body.classList.remove("sidebar-collapsed");
-    window.clearTimeout(window.__hideT);
-    window.__hideT = window.setTimeout(() => {
-      document.body.classList.add("sidebar-collapsed");
-    }, 4000);
-  });
-}
 
 // ---------------- load pdf ----------------
 async function loadPDFArrayBuffer(buffer, name) {
@@ -375,7 +415,6 @@ async function loadPDFArrayBuffer(buffer, name) {
     await reader.loadPage(p, { resetWord: true });
     reader.setIdx(off);
 
-    // keep preview in sync with restored page
     preview.setCurrentPage?.(p);
     if (!document.body.classList.contains("preview-collapsed")) {
       preview.queueRender?.(p);
@@ -391,14 +430,15 @@ dom.fileInput?.addEventListener("change", async () => {
   const buf = await f.arrayBuffer();
   await loadPDFArrayBuffer(buf, f.name);
 
-  // show controls after upload
+  // after upload, show sidebar full (so user can adjust settings)
+  document.body.classList.remove("sidebar-min");
   document.body.classList.remove("sidebar-collapsed");
+  saveUI(dom);
 });
 
 // ---------------- auto-load bundled pdf on startup ----------------
 async function autoLoadBundled() {
   if (pdf) return;
-
   try {
     const res = await fetch("./pdf/mcnamara.pdf", { cache: "no-store" });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
