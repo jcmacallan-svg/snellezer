@@ -397,134 +397,118 @@
 <button id="mobilePdfBtn" title="Toggle PDF" aria-label="Toggle PDF preview">📄</button>
 
 <div id="app">
-  <aside id="sidebar" aria-label="Controls">
-    <div id="sideTop">
-      <button id="burger" title="Hide/show controls (H)">☰</button>
-      <div id="sideTitle">RSVP Reader</div>
+  <div id="sideScroll">
+
+  <div class="group">
+    <div class="gtitle">Open</div>
+    <label for="fileInput">PDF file</label>
+    <input id="fileInput" type="file" accept="application/pdf,.pdf">
+    <div class="hint">Reads your PDF locally in the browser (best with selectable text).</div>
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Start point</div>
+    <div class="row">
+      <div>
+        <label for="startPage">Start page</label>
+        <input id="startPage" type="number" min="1" value="1">
+      </div>
+      <button class="shrink" id="reload" disabled title="Reload from page">Reload</button>
     </div>
+  </div>
 
-   
-           <label for="fileInput">PDF file</label>
-        <input id="fileInput" type="file" accept="application/pdf,.pdf">
-        <div class="hint">Reads your PDF locally in the browser (best with selectable text).</div>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Start point</div>
-        <div class="row">
-          <div>
-            <label for="startPage">Start page</label>
-            <input id="startPage" type="number" min="1" value="1">
-          </div>
-          <button class="shrink" id="reload" disabled title="Reload from page">Reload</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Speed</div>
-        <div class="row">
-          <div>
-            <label for="wpmNumber">Words per minute</label>
-            <input id="wpmNumber" type="number" min="100" max="900" value="600">
-          </div>
-        </div>
-        <div class="row">
-          <input id="wpmRange" type="range" min="100" max="900" value="600">
-          <div class="tiny" id="wpmRangeVal">600</div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Comprehension</div>
-        <label for="mode">Mode</label>
-        <select id="mode" disabled>
-          <option value="speed">Speed</option>
-          <option value="comprehension">Comprehension</option>
-          <option value="custom">Custom</option>
-        </select>
-
-        <label for="sentencePause">Sentence pause (ms)</label>
-        <input id="sentencePause" type="number" min="0" max="2000" step="10" value="220" disabled>
-
-        <label for="commaPause">Comma pause (ms)</label>
-        <input id="commaPause" type="number" min="0" max="1000" step="10" value="120" disabled>
-
-        <label for="paraPause">Paragraph pause (ms)</label>
-        <input id="paraPause" type="number" min="0" max="4000" step="50" value="650" disabled>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Appearance</div>
-        <div class="row">
-          <div>
-            <label for="fontSize">Font size</label>
-            <input id="fontSize" type="range" min="36" max="96" value="72">
-          </div>
-          <div class="tiny" id="fontSizeVal">72</div>
-        </div>
-
-        <label for="pivotGapPx">Pivot spacing (px)</label>
-        <input id="pivotGapPx" type="number" min="4" max="20" step="1" value="8">
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Navigation</div>
-        <div class="row">
-          <button id="prevPage" disabled>◀ Prev</button>
-          <button id="nextPage" disabled>Next ▶</button>
-        </div>
-        <div class="row">
-          <button id="startBtn" disabled>Start</button>
-          <button id="pauseBtn" disabled>Pause</button>
-          <button id="resetBtn" disabled>Reset</button>
-        </div>
-        <div class="hint">Keys: Space pause/resume · H hide controls · P toggle preview · F fullscreen · R reset preview · PageUp/Down pages.</div>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Preview</div>
-        <div class="row">
-          <button id="togglePreview" disabled>Hide preview</button>
-          <label style="display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12px">
-            <input id="lockPos" type="checkbox" disabled> Lock
-          </label>
-        </div>
-
-        <label for="fitMode">Fit</label>
-        <select id="fitMode" disabled>
-          <option value="width">Fit width</option>
-          <option value="page">Fit page</option>
-        </select>
-
-        <label for="anchor">Anchor</label>
-        <select id="anchor" disabled>
-          <option value="center">Center</option>
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </select>
-
-        <label for="zoom">Zoom</label>
-        <div class="row">
-          <input id="zoom" type="range" min="70" max="250" value="120" disabled>
-          <div class="tiny" id="zoomVal">1.20×</div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Focus</div>
-        <label for="focus">Focus mode</label>
-        <select id="focus" disabled>
-          <option value="on">On</option>
-          <option value="off">Off</option>
-        </select>
-
-        <div class="row">
-          <button id="fsBtn" class="shrink">Fullscreen</button>
-          <button id="showControlsBtn" class="shrink" title="Show controls temporarily">Show</button>
-        </div>
+  <div class="group">
+    <div class="gtitle">Speed</div>
+    <div class="row">
+      <div>
+        <label for="wpmNumber">Words per minute</label>
+        <input id="wpmNumber" type="number" min="100" max="900" value="600">
       </div>
     </div>
-  </aside>
+    <div class="row">
+      <input id="wpmRange" type="range" min="100" max="900" value="600">
+      <div class="tiny" id="wpmRangeVal">600</div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Comprehension</div>
+    <label for="mode">Mode</label>
+    <select id="mode" disabled>
+      <option value="speed">Speed</option>
+      <option value="comprehension">Comprehension</option>
+      <option value="custom">Custom</option>
+    </select>
+
+    <label for="sentencePause">Sentence pause (ms)</label>
+    <input id="sentencePause" type="number" min="0" max="2000" step="10" value="220" disabled>
+
+    <label for="commaPause">Comma pause (ms)</label>
+    <input id="commaPause" type="number" min="0" max="1000" step="10" value="120" disabled>
+
+    <label for="paraPause">Paragraph pause (ms)</label>
+    <input id="paraPause" type="number" min="0" max="4000" step="50" value="650" disabled>
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Appearance</div>
+    <div class="row">
+      <div>
+        <label for="fontSize">Font size</label>
+        <input id="fontSize" type="range" min="36" max="96" value="72">
+      </div>
+      <div class="tiny" id="fontSizeVal">72</div>
+    </div>
+
+    <label for="pivotGapPx">Pivot spacing (px)</label>
+    <input id="pivotGapPx" type="number" min="4" max="20" step="1" value="8">
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Navigation</div>
+    <div class="row">
+      <button id="prevPage" disabled>◀ Prev</button>
+      <button id="nextPage" disabled>Next ▶</button>
+    </div>
+    <div class="row">
+      <button id="startBtn" disabled>Start</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn" disabled>Reset</button>
+    </div>
+    <div class="hint">Keys: Space pause/resume · PageUp/Down pages.</div>
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Preview</div>
+    <div class="row">
+      <button id="togglePreview" disabled>Hide preview</button>
+      <label style="display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12px">
+        <input id="lockPos" type="checkbox" disabled> Lock
+      </label>
+    </div>
+
+    <label for="fitMode">Fit</label>
+    <select id="fitMode" disabled>
+      <option value="width">Fit width</option>
+      <option value="page">Fit page</option>
+    </select>
+
+    <label for="anchor">Anchor</label>
+    <select id="anchor" disabled>
+      <option value="center">Center</option>
+      <option value="left">Left</option>
+      <option value="right">Right</option>
+    </select>
+
+    <label for="zoom">Zoom</label>
+    <div class="row">
+      <input id="zoom" type="range" min="70" max="250" value="120" disabled>
+      <div class="tiny" id="zoomVal">1.20×</div>
+    </div>
+  </div>
+
+</div>
+
 
   <section id="main">
     <section id="readerPane">
