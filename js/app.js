@@ -141,12 +141,47 @@ function isTypingTarget(t) {
 const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
 
 // ---------------- sidebar drawer (mobile) ----------------
+// ---------------- sidebar drawer (mobile) ----------------
 function openDrawer() {
   document.body.classList.add("sidebar-open");
 }
+
 function closeDrawer() {
   document.body.classList.remove("sidebar-open");
 }
+
+function toggleDrawer() {
+  if (document.body.classList.contains("sidebar-open")) closeDrawer();
+  else openDrawer();
+}
+
+// Mobile menu button (top-left floating)
+mobileMenuBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleDrawer();
+});
+
+// Sidebar header burger should also toggle drawer on mobile
+burger?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (isMobile()) toggleDrawer();
+  else toggleSidebarCollapsed();
+});
+
+// Clicking the dark backdrop closes the drawer
+backdrop?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  closeDrawer();
+});
+
+// Escape closes drawer on mobile
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && isMobile()) closeDrawer();
+});
+
 
 // Desktop: min vs collapsed
 function setSidebarMin(on) {
