@@ -556,4 +556,7 @@ async function autoLoadBundled() {
     if (dom.fileStatus) dom.fileStatus.textContent = "No default PDF";
   }
 }
-autoLoadBundled();
+window.addEventListener("DOMContentLoaded", () => {
+  autoLoadBundled();
+});
+
