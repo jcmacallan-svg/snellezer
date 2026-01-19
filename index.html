@@ -497,7 +497,7 @@
 
       <div class="group">
         <div class="gtitle">Open</div>
-        <button id="openMcNamara" class="primary">📘 Robert McNamara</button>
+        <button id="openmcnamara" class="primary">📘 Robert mcnamara</button>
         <button id="diagBtn">ℹ️ Diagnostics</button>
 <div class="hint">Opens the bundled PDF: <code>pdf/mcnamara.pdf</code></div>
         <label for="fileInput">PDF file</label>
@@ -633,7 +633,7 @@
 
   <section id="main">
     <section id="readerPane">
-    <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert McNamara.</div>
+    <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert mcnamara.</div>
       <div id="rsvpBox">
         <div id="leftText"></div>
         <div id="pivot"></div>
@@ -1545,15 +1545,15 @@ toastMsg("PDF load failed.");
     const buffer = await file.arrayBuffer();
     await loadPDFArrayBuffer(buffer, file.name, file.name);
   });
-  const openMcNamaraBtn = document.getElementById("openMcNamara");
-  if (openMcNamaraBtn){
-    openMcNamaraBtn.addEventListener("click", async () => {
+  const openmcnamaraBtn = document.getElementById("openmcnamara");
+  if (openmcnamaraBtn){
+    openmcnamaraBtn.addEventListener("click", async () => {
       try{
-        let res = await fetch("./pdf/McNamara.pdf");
-        if (!res.ok) res = await fetch("./PDF/McNamara.pdf"); // case-sensitive deploys
-        if (!res.ok) throw new Error("McNamara.pdf not found");
+        let res = await fetch("./pdf/mcnamara.pdf");
+        if (!res.ok) res = await fetch("./PDF/mcnamara.pdf"); // case-sensitive deploys
+        if (!res.ok) throw new Error("mcnamara.pdf not found");
         const buffer = await res.arrayBuffer();
-        await loadPDFArrayBuffer(buffer, "McNamara.pdf", "Robert McNamara");
+        await loadPDFArrayBuffer(buffer, "mcnamara.pdf", "Robert mcnamara");
       } catch (e){
         console.error(e);
         alert("Could not open bundled PDF. Make sure you deploy it as pdf/mcnamara.pdf (lowercase folder name recommended).");
