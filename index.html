@@ -499,7 +499,7 @@
         <div class="gtitle">Open</div>
         <button id="openMcNamara" class="primary">📘 Robert McNamara</button>
         <button id="diagBtn">ℹ️ Diagnostics</button>
-<div class="hint">Opens the bundled PDF: <code>pdf/McNamara.pdf</code></div>
+<div class="hint">Opens the bundled PDF: <code>pdf/mcnamara.pdf</code></div>
         <label for="fileInput">PDF file</label>
         <input id="fileInput" type="file" accept="application/pdf,.pdf">
         <div class="hint">Reads your PDF locally in the browser. For best results, use PDFs with selectable text (not scans).</div>
@@ -1556,7 +1556,7 @@ toastMsg("PDF load failed.");
         await loadPDFArrayBuffer(buffer, "McNamara.pdf", "Robert McNamara");
       } catch (e){
         console.error(e);
-        alert("Could not open bundled PDF. Make sure you deploy it as pdf/McNamara.pdf (lowercase folder name recommended).");
+        alert("Could not open bundled PDF. Make sure you deploy it as pdf/mcnamara.pdf (lowercase folder name recommended).");
       }
     });
   }
