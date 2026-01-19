@@ -406,170 +406,163 @@
 </head>
 
 <body>
-<div id="backdrop" aria-hidden="true"></div>
+  <div id="backdrop" aria-hidden="true"></div>
 
-<button id="mobileMenuBtn" title="Menu" aria-label="Open menu">☰</button>
-<button id="mobilePdfBtn" title="Toggle PDF" aria-label="Toggle PDF preview">📄</button>
+  <button id="mobileMenuBtn" title="Menu" aria-label="Open menu">☰</button>
+  <button id="mobilePdfBtn" title="Toggle PDF" aria-label="Toggle PDF preview">📄</button>
 
-<div id="app">
-  <aside id="sidebar" aria-label="Controls">
-    <div id="sideTop">
-      <button id="burger" title="Menu">☰</button>
-      <div id="sideTitle">RSVP Reader</div>
-    </div>
-
-    <div id="sideScroll">
-      <div class="group">
-        <div class="gtitle">Open</div>
-        <label for="fileInput">PDF file</label>
-        <input id="fileInput" type="file" accept="application/pdf,.pdf">
-        <div class="hint">Reads your PDF locally in the browser (best with selectable text).</div>
+  <div id="app">
+    <aside id="sidebar" aria-label="Controls">
+      <div id="sideTop">
+        <button id="burger" title="Menu">☰</button>
+        <div id="sideTitle">RSVP Reader</div>
       </div>
 
-      <div class="group">
-        <div class="gtitle">Start point</div>
-        <div class="row">
-          <div>
-            <label for="startPage">Start page</label>
-            <input id="startPage" type="number" min="1" value="1">
-          </div>
-          <button class="shrink" id="reload" disabled title="Reload from page">Reload</button>
+      <div id="sideScroll">
+        <div class="group">
+          <div class="gtitle">Open</div>
+          <label for="fileInput">PDF file</label>
+          <input id="fileInput" type="file" accept="application/pdf,.pdf">
+          <div class="hint">Reads your PDF locally in the browser (best with selectable text).</div>
         </div>
-      </div>
 
-      <div class="group">
-        <div class="gtitle">Speed</div>
-        <div class="row">
-          <div>
-            <label for="wpmNumber">Words per minute</label>
-            <input id="wpmNumber" type="number" min="100" max="900" value="600">
+        <div class="group">
+          <div class="gtitle">Start point</div>
+          <div class="row">
+            <div>
+              <label for="startPage">Start page</label>
+              <input id="startPage" type="number" min="1" value="1">
+            </div>
+            <button class="shrink" id="reload" disabled title="Reload from page">Reload</button>
           </div>
         </div>
-        <div class="row">
-          <input id="wpmRange" type="range" min="100" max="900" value="600">
-          <div class="tiny" id="wpmRangeVal">600</div>
-        </div>
-      </div>
 
-      <div class="group">
-        <div class="gtitle">Comprehension</div>
-        <label for="mode">Mode</label>
-        <select id="mode" disabled>
-          <option value="speed">Speed</option>
-          <option value="comprehension">Comprehension</option>
-          <option value="custom">Custom</option>
-        </select>
-
-        <label for="sentencePause">Sentence pause (ms)</label>
-        <input id="sentencePause" type="number" min="0" max="2000" step="10" value="220" disabled>
-
-        <label for="commaPause">Comma pause (ms)</label>
-        <input id="commaPause" type="number" min="0" max="1000" step="10" value="120" disabled>
-
-        <label for="paraPause">Paragraph pause (ms)</label>
-        <input id="paraPause" type="number" min="0" max="4000" step="50" value="650" disabled>
-      </div>
-
-      <div class="group">
-        <div class="gtitle">Appearance</div>
-        <div class="row">
-          <div>
-            <label for="fontSize">Font size</label>
-            <input id="fontSize" type="range" min="36" max="96" value="72">
+        <div class="group">
+          <div class="gtitle">Speed</div>
+          <div class="row">
+            <div>
+              <label for="wpmNumber">Words per minute</label>
+              <input id="wpmNumber" type="number" min="100" max="900" value="600">
+            </div>
           </div>
-          <div class="tiny" id="fontSizeVal">72</div>
+          <div class="row">
+            <input id="wpmRange" type="range" min="100" max="900" value="600">
+            <div class="tiny" id="wpmRangeVal">600</div>
+          </div>
         </div>
 
-        <label for="pivotGapPx">Pivot spacing (px)</label>
-        <input id="pivotGapPx" type="number" min="4" max="20" step="1" value="8">
-      </div>
+        <div class="group">
+          <div class="gtitle">Comprehension</div>
+          <label for="mode">Mode</label>
+          <select id="mode" disabled>
+            <option value="speed">Speed</option>
+            <option value="comprehension">Comprehension</option>
+            <option value="custom">Custom</option>
+          </select>
 
-      <div class="group">
-        <div class="gtitle">Navigation</div>
-        <div class="row">
-          <button id="prevPage" disabled>◀ Prev</button>
-          <button id="nextPage" disabled>Next ▶</button>
-        </div>
-        <div class="row">
-          <button id="startBtn" disabled>Start</button>
-          <button id="pauseBtn" disabled>Pause</button>
-          <button id="resetBtn" disabled>Reset</button>
-        </div>
-        <div class="hint">Keys: Space pause/resume · H sidebar · P preview · F fullscreen.</div>
-      </div>
+          <label for="sentencePause">Sentence pause (ms)</label>
+          <input id="sentencePause" type="number" min="0" max="2000" step="10" value="220" disabled>
 
-      <div class="group">
-        <div class="gtitle">Preview</div>
-        <div class="row">
-          <button id="togglePreview" disabled>Hide preview</button>
-          <label style="display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12px">
-            <input id="lockPos" type="checkbox" disabled> Lock
-          </label>
+          <label for="commaPause">Comma pause (ms)</label>
+          <input id="commaPause" type="number" min="0" max="1000" step="10" value="120" disabled>
+
+          <label for="paraPause">Paragraph pause (ms)</label>
+          <input id="paraPause" type="number" min="0" max="4000" step="50" value="650" disabled>
         </div>
 
-        <label for="fitMode">Fit</label>
-        <select id="fitMode" disabled>
-          <option value="width">Fit width</option>
-          <option value="page">Fit page</option>
-        </select>
+        <div class="group">
+          <div class="gtitle">Appearance</div>
+          <div class="row">
+            <div>
+              <label for="fontSize">Font size</label>
+              <input id="fontSize" type="range" min="36" max="96" value="72">
+            </div>
+            <div class="tiny" id="fontSizeVal">72</div>
+          </div>
 
-        <label for="anchor">Anchor</label>
-        <select id="anchor" disabled>
-          <option value="center">Center</option>
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </select>
-
-        <label for="zoom">Zoom</label>
-        <div class="row">
-          <input id="zoom" type="range" min="70" max="250" value="120" disabled>
-          <div class="tiny" id="zoomVal">1.20×</div>
+          <label for="pivotGapPx">Pivot spacing (px)</label>
+          <input id="pivotGapPx" type="number" min="4" max="20" step="1" value="8">
         </div>
-      </div>
-    </div>
-  </aside>
 
-  <section id="main">
-    <!-- jouw main/reader/preview blijft hetzelfde -->
-    ...
-  </section>
-</div>
+        <div class="group">
+          <div class="gtitle">Navigation</div>
+          <div class="row">
+            <button id="prevPage" disabled>◀ Prev</button>
+            <button id="nextPage" disabled>Next ▶</button>
+          </div>
+          <div class="row">
+            <button id="startBtn" disabled>Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn" disabled>Reset</button>
+          </div>
+          <div class="hint">Keys: Space pause/resume · H sidebar · P preview · F fullscreen.</div>
+        </div>
 
+        <div class="group">
+          <div class="gtitle">Preview</div>
+          <div class="row">
+            <button id="togglePreview" disabled>Hide preview</button>
+            <label style="display:flex;align-items:center;gap:8px;margin:0;color:var(--muted);font-size:12px">
+              <input id="lockPos" type="checkbox" disabled> Lock
+            </label>
+          </div>
 
+          <label for="fitMode">Fit</label>
+          <select id="fitMode" disabled>
+            <option value="width">Fit width</option>
+            <option value="page">Fit page</option>
+          </select>
 
-  <section id="main">
-    <section id="readerPane">
-      <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF, or tap <b>📘</b> for Robert McNamara.</div>
-      <div id="rsvpBox">
-        <div id="leftText"></div>
-        <div id="pivot"></div>
-        <div id="rightText"></div>
-      </div>
-    </section>
+          <label for="anchor">Anchor</label>
+          <select id="anchor" disabled>
+            <option value="center">Center</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
 
-    <div id="splitter" title="Drag to resize preview"></div>
-
-    <aside id="previewPane">
-      <div id="previewTop">
-        <div id="previewTitle">PDF</div>
-        <div id="previewPage">–</div>
-      </div>
-      <div id="previewBody" title="Double-click / double-tap to reset view">
-        <canvas id="canvas"></canvas>
+          <label for="zoom">Zoom</label>
+          <div class="row">
+            <input id="zoom" type="range" min="70" max="250" value="120" disabled>
+            <div class="tiny" id="zoomVal">1.20×</div>
+          </div>
+        </div>
       </div>
     </aside>
-  </section>
-</div>
 
-<div id="statusbar">
-  <span class="pill" id="fileStatus">No PDF</span>
-  <span class="pill" id="pageStatus">Page: –</span>
-  <span class="pill" id="wordStatus">Word: –</span>
-  <span class="pill" id="extractStatus">Extract: –</span>
-</div>
+    <section id="main">
+      <section id="readerPane">
+        <div id="emptyHint">Tap <b>☰</b> to open the menu and choose a PDF.</div>
+        <div id="rsvpBox">
+          <div id="leftText"></div>
+          <div id="pivot"></div>
+          <div id="rightText"></div>
+        </div>
+      </section>
 
-<div id="toast">Tip</div>
-<!-- IMPORTANT: app.js expects this exact DOM -->
-<script type="module" src="./js/app.js"></script>
+      <div id="splitter" title="Drag to resize preview"></div>
+
+      <aside id="previewPane">
+        <div id="previewTop">
+          <div id="previewTitle">PDF</div>
+          <div id="previewPage">–</div>
+        </div>
+        <div id="previewBody" title="Double-click / double-tap to reset view">
+          <canvas id="canvas"></canvas>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <div id="statusbar">
+    <span class="pill" id="fileStatus">No PDF</span>
+    <span class="pill" id="pageStatus">Page: –</span>
+    <span class="pill" id="wordStatus">Word: –</span>
+    <span class="pill" id="extractStatus">Extract: –</span>
+  </div>
+
+  <div id="toast">Tip</div>
+
+  <script type="module" src="./js/app.js"></script>
 </body>
+
 </html>
